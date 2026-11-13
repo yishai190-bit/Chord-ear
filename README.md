@@ -2,4 +2,4 @@
 
 אימון שמיעה לאקורדים ולמרווחים: להקה שלמה שמחוללת בדפדפן, ותרגול שירה עם זיהוי גובה צליל מהמיקרופון.
 
-לשימוש: https://yishai190-bit.github.io/chord-ear/
+לשימוש: https://yishai190-bit.github.io/Chord-ear/
