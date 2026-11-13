@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>אוזן לאקורדים</title>
+<style>
+:root{
+  --bg:#14121a; --card:#1f1c28; --card2:#2a2636; --line:#3a3548;
+  --text:#f2eee6; --mute:#a59fb3; --acc:#f5a524; --acc2:#ffcf70;
+  --ok:#3ecf8e; --bad:#ff5d6c; --play:#7aa7ff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"Rubik","Heebo",system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+body{padding:calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 24px) calc(env(safe-area-inset-left) + 12px)}
+.wrap{max-width:560px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+h1{font-size:22px;margin:0;letter-spacing:.3px}
+h1 span{color:var(--acc)}
+.stats{display:flex;gap:6px;font-size:13px}
+.pill{background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.pill b{color:var(--acc2)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;font-size:14px}
+label.small{display:block;font-size:11px;color:var(--mute);margin:0 2px 3px}
+.info{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--mute);margin-bottom:10px;flex-wrap:wrap;gap:6px}
+.info b{color:var(--text)}
+.ctrls{display:flex;gap:8px;align-items:stretch}
+button{font:inherit;cursor:pointer;border:none;border-radius:12px;color:var(--text)}
+.big{flex:1;background:var(--acc);color:#1a1300;font-weight:700;font-size:18px;padding:14px}
+.big.stop{background:var(--bad);color:#fff}
+.tog{background:var(--card2);border:1px solid var(--line);padding:10px 12px;font-size:14px}
+.tog.on{border-color:var(--acc);color:var(--acc2);background:#3a2e14}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 6px;direction:ltr}
+.slot{background:var(--card2);border:2px solid var(--line);border-radius:14px;min-height:96px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;position:relative;transition:border-color .12s,transform .12s}
+.slot .n{font-size:11px;color:var(--mute)}
+.slot .ans{font-size:22px;font-weight:700;min-height:30px;font-family:"Times New Roman",Georgia,serif}
+.slot .sub{font-size:12px;color:var(--mute);min-height:16px;direction:ltr}
+.slot.active{border-color:var(--acc)}
+.slot.given{opacity:.55}
+.slot.playing{transform:translateY(-3px);box-shadow:0 0 0 2px var(--play) inset}
+.slot.ok{border-color:var(--ok)}
+.slot.bad{border-color:var(--bad)}
+.slot .fix{font-size:13px;color:var(--ok);direction:ltr;font-family:"Times New Roman",Georgia,serif;font-weight:700}
+.slot .pb{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:transparent;color:var(--mute);font-size:11px;padding:0;border:1px solid var(--line)}
+.chords{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;direction:ltr;margin-top:12px}
+.chords button{background:var(--card2);border:1px solid var(--line);padding:12px 4px;font-size:19px;font-weight:700;font-family:"Times New Roman",Georgia,serif}
+.chords button:active{background:#3a3548}
+.chords button:disabled{opacity:.35}
+.chords button small{display:block;font-family:system-ui,sans-serif;font-size:11px;font-weight:400;color:var(--mute);margin-top:2px}
+.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.actions button{flex:1;padding:12px;font-size:15px;font-weight:600;background:var(--card2);border:1px solid var(--line);min-width:120px}
+.actions .primary{background:var(--acc);color:#1a1300;border-color:var(--acc)}
+.fb{min-height:22px;text-align:center;font-size:15px;margin-top:10px}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)}
+details summary{cursor:pointer;color:var(--mute);font-size:14px}
+.mix{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.hint{font-size:12px;color:var(--mute);line-height:1.5;margin-top:8px}
+.lvdesc{font-size:12px;color:var(--mute);margin-top:8px;line-height:1.5}
+.ltr{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.tempo{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px;color:var(--mute)}
+.tempo input{flex:1;accent-color:var(--acc);direction:ltr;height:28px}
+.tempo b{color:var(--text);min-width:64px;text-align:center}
+.tempo b.mine{color:var(--acc2)}
+.tempo .tog{padding:6px 12px}
+.tabs{display:flex;gap:6px;margin-bottom:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tabs button{flex:1;background:transparent;padding:10px;font-size:15px;font-weight:600;color:var(--mute)}
+.tabs button.on{background:var(--card2);color:var(--acc2)}
+.prompt{text-align:center;font-size:26px;font-weight:700;margin:6px 0 14px;min-height:36px}
+.prompt small{display:block;font-size:14px;font-weight:400;color:var(--mute);margin-top:4px}
+#iAns button{font-family:inherit;font-size:18px}
+#iAns button.ok{border-color:var(--ok);background:#173a2b}
+#iAns button.bad{border-color:var(--bad);background:#3a1a20}
+.tuner{margin-top:14px;text-align:center}
+.tnote{font-size:22px;font-weight:700;min-height:30px}
+.tnote.hit{color:var(--ok)}
+.tbar{position:relative;height:18px;background:var(--card2);border:1px solid var(--line);border-radius:9px;margin:8px 0 4px;overflow:hidden;direction:ltr}
+.tzone{position:absolute;left:41%;width:18%;top:0;bottom:0;background:#1f4a35}
+.tneedle{position:absolute;top:-2px;bottom:-2px;width:4px;margin-left:-2px;left:50%;background:var(--acc);border-radius:2px;transition:left .08s}
+.tlbl{display:flex;justify-content:space-between;font-size:11px;color:var(--mute);direction:ltr}
+.fallback{background:var(--card2);border:1px dashed var(--line);border-radius:12px;padding:12px;margin-top:12px;font-size:13px;line-height:1.6;color:var(--mute)}
+.fallback .row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.fallback .row>*{flex:1}
+.filebtn{display:block;text-align:center;background:var(--card2);border:1px solid var(--acc);color:var(--acc2);border-radius:12px;padding:10px;cursor:pointer;font-size:14px}
+.filebtn input{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>אוזן <span>לאקורדים</span></h1>
+    <div class="stats">
+      <div class="pill">נקודות <b id="score">0</b></div>
+      <div class="pill">רצף <b id="streak">0</b></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-v="vChords" class="on">🎸 אקורדים</button>
+    <button data-v="vInt">🎵 מרווחים</button>
+  </nav>
+
+  <section id="vInt" hidden>
+    <div class="card">
+      <div class="grid2">
+        <div><label class="small">מצב</label>
+          <select id="iMode"><option value="listen">אני משמיע, אתה מזהה</option><option value="sing">אני נותן, אתה שר</option></select></div>
+        <div id="iHowWrap"><label class="small">השמעה</label>
+          <select id="iHow"><option value="mel">בזה אחר זה</option><option value="harm">ביחד</option></select></div>
+        <div><label class="small">טווח קול</label>
+          <select id="iRange"><option value="high">גבוה (נשים / ילדים)</option><option value="low">נמוך (גברים)</option></select></div>
+        <div><label class="small">דו</label>
+          <select id="iKey"><option value="random">משתנה</option><option value="fixed">תמיד C</option></select></div>
+      </div>
+      <label class="small" style="margin-top:10px">אילו תווים לתרגל</label>
+      <div class="mix" id="iPool"></div>
+    </div>
+
+    <div class="card">
+      <div class="info"><div>דו = <b id="iBase" class="ltr">—</b></div><div id="iInfo2"></div></div>
+      <div class="prompt" id="iPrompt"></div>
+      <div class="ctrls" id="iCtrls"></div>
+      <div id="iTuner" class="tuner" hidden>
+        <div class="tnote" id="tNote">…</div>
+        <div class="tbar"><div class="tzone"></div><div class="tneedle" id="tNeedle"></div></div>
+        <div class="tlbl"><span>⬇ נמוך מדי</span><span>בול</span><span>גבוה מדי ⬆</span></div>
+      </div>
+      <div id="iFallback" class="fallback" hidden></div>
+      <div class="chords" id="iAns"></div>
+      <div class="fb" id="iFb"></div>
+      <div class="actions" id="iActs"></div>
+    </div>
+  </section>
+
+  <section id="vChords">
+  <div class="card">
+    <div class="grid2">
+      <div><label class="small">רמה</label><select id="level"></select></div>
+      <div><label class="small">מצב</label>
+        <select id="mode"><option value="full">זהה את כל המהלך</option><option value="two">זהה שני אקורדים</option><option value="single">זהה אקורד אחד</option></select></div>
+      <div><label class="small">סגנון</label>
+        <select id="style"><option value="random">אקראי</option><option value="pop">פופ</option><option value="rock">רוק</option><option value="ballad">בלדה</option><option value="lofi">לואו-פיי</option></select></div>
+      <div><label class="small">סולם</label>
+        <select id="keysel"><option value="random">אקראי</option><option value="fixed">רק C / Am</option></select></div>
+    </div>
+    <div class="lvdesc" id="lvdesc"></div>
+  </div>
+
+  <div class="card">
+    <div class="info">
+      <div>סולם: <b id="keyname">—</b></div>
+      <div><b id="stylename">—</b> · <span id="bpm" class="ltr">—</span></div>
+    </div>
+    <div class="ctrls">
+      <button class="big" id="playBtn">▶ נגן</button>
+      <button class="tog" id="tonicBtn" title="השמע את אקורד הבית">🎯 בית</button>
+      <button class="tog" id="loopBtn">🔁 לופ</button>
+    </div>
+    <div class="tempo">
+      <span>קצב</span>
+      <input type="range" id="tempo" min="40" max="180" step="1">
+      <b id="tempoVal" class="ltr">—</b>
+      <button class="tog" id="tempoReset" title="חזרה לקצב של הסגנון">↺</button>
+    </div>
+    <div class="slots" id="slots"></div>
+    <div class="chords" id="chords"></div>
+    <div class="fb" id="fb"></div>
+    <div class="actions" id="actions"></div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>🎚️ מיקסר – הדלק/כבה כלים</summary>
+      <div class="mix" id="mix"></div>
+      <div class="hint">טיפ: כשמשהו קשה, כבה את המלודיה והתופים ותקשיב לבס. הבס כמעט תמיד מנגן את שורש האקורד.</div>
+    </details>
+    <div class="hint">איך מתרגלים: לחץ על משבצת ואז על אקורד. ▶ הקטן בכל משבצת מנגן רק את התיבה הזו. אחרי הבדיקה אפשר להשוות בין "המקור" ל"מה שעניתי".<br>
+    באייפון, אם אין צליל, כבה את מתג השקט.</div>
+  </div>
+  </section>
+</div>
+
+<script>
+"use strict";
+/* ===================== Music data ===================== */
+const QUAL={maj:[0,4,7],min:[0,3,7],dim:[0,3,6],dom7:[0,4,7,10],maj7:[0,4,7,11],m7:[0,3,7,10]};
+const SUF={maj:'',min:'m',dim:'dim',dom7:'7',maj7:'maj7',m7:'m7'};
+const CH_MAJ={'I':[0,'maj'],'ii':[2,'min'],'iii':[4,'min'],'IV':[5,'maj'],'V':[7,'maj'],'vi':[9,'min'],'vii°':[11,'dim'],
+  '♭VII':[10,'maj'],'♭VI':[8,'maj'],'♭III':[3,'maj'],'iv':[5,'min'],'II':[2,'maj'],'III':[4,'maj'],
+  'Imaj7':[0,'maj7'],'ii7':[2,'m7'],'iii7':[4,'m7'],'IVmaj7':[5,'maj7'],'V7':[7,'dom7'],'vi7':[9,'m7'],'II7':[2,'dom7'],'III7':[4,'dom7']};
+const CH_MIN={'i':[0,'min'],'ii°':[2,'dim'],'III':[3,'maj'],'iv':[5,'min'],'v':[7,'min'],'V':[7,'maj'],'VI':[8,'maj'],'VII':[10,'maj']};
+const SHARP=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLAT =['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+const MAJ_SCALE=[0,2,4,5,7,9,11], MIN_SCALE=[0,2,3,5,7,8,10];
+const KEYS_MAJ=[[0,0],[7,0],[2,0],[9,0],[4,0],[5,1],[10,1],[3,1],[8,1]];
+const KEYS_MIN=[[9,0],[4,0],[11,0],[6,0],[2,1],[7,1],[0,1],[5,1]];
+
+const LEVELS=[
+ {name:'1 · I IV V', mode:'major', set:['I','IV','V'], startTonic:true, desc:'שלושת האקורדים הבסיסיים. המהלך תמיד מתחיל באקורד הבית (I).'},
+ {name:'2 · + vi', mode:'major', set:['I','IV','V','vi'], startTonic:true, desc:'מוסיפים את vi, המינורי הכי נפוץ בפופ. ארבעת האקורדים שמרכיבים אלפי שירים.'},
+ {name:'3 · כל הדיאטוניים', mode:'major', set:['I','ii','iii','IV','V','vi'], startTonic:false, desc:'כל האקורדים של הסולם המז׳ורי (בלי vii°). המהלך לא חייב להתחיל ב-I, אז כדאי להיעזר בכפתור 🎯.'},
+ {name:'4 · מינור', mode:'minor', set:['i','iv','v','V','VI','III','VII'], startTonic:false, desc:'שירים בסולם מינורי. שים לב להבדל בין v (מינורי) ל-V (מז׳ורי).'},
+ {name:'5 · אקורדים מושאלים', mode:'major', set:['I','ii','IV','V','vi','♭VII','♭VI','iv','II'], startTonic:false, desc:'צבעים מחוץ לסולם: ♭VII ו-♭VI (רוק), iv מינורי (הצליל ה"עצוב" של IV), ו-II (דומיננטה משנית).'},
+ {name:'6 · אקורדי ספטים', mode:'major', set:['Imaj7','ii7','iii7','IVmaj7','V7','vi7','II7'], startTonic:false, desc:'ג׳ז, נשמה ולואו-פיי: אקורדים עם ספטימה. ii7–V7–Imaj7 הוא המהלך הכי חשוב כאן.'},
+];
+const CURATED=[
+ ['I','V','vi','IV'],['I','IV','V','IV'],['I','vi','IV','V'],['vi','IV','I','V'],['I','IV','vi','V'],['I','V','IV','V'],
+ ['IV','I','V','vi'],['I','IV','I','V'],['I','ii','IV','V'],['I','iii','IV','V'],['I','vi','ii','V'],['ii','V','I','I'],
+ ['I','V','vi','iii'],['IV','V','iii','vi'],['I','iii','vi','IV'],['vi','V','IV','V'],['I','V','I','IV'],['IV','V','I','I'],
+ ['I','♭VII','IV','I'],['I','♭VI','♭VII','I'],['I','IV','iv','I'],['I','II','IV','I'],['I','♭VII','♭VI','♭VII'],['IV','iv','I','I'],
+ ['I','vi','iv','V'],['I','II','IV','iv'],['vi','IV','I','♭VII'],
+ ['i','VI','III','VII'],['i','VII','VI','VII'],['i','iv','v','i'],['i','VI','VII','i'],['i','iv','VII','III'],['i','VII','VI','V'],
+ ['VI','VII','i','i'],['i','III','VII','iv'],['i','iv','i','V'],['i','VI','iv','V'],['i','v','VI','iv'],['i','III','iv','VI'],
+ ['Imaj7','vi7','ii7','V7'],['ii7','V7','Imaj7','Imaj7'],['Imaj7','IVmaj7','iii7','vi7'],['IVmaj7','V7','iii7','vi7'],
+ ['Imaj7','II7','ii7','V7'],['iii7','vi7','ii7','V7'],['IVmaj7','iii7','ii7','Imaj7'],['Imaj7','vi7','IVmaj7','V7'],
+];
+
+/* ===================== Styles ===================== */
+const STYLES={
+ pop:{name:'פופ', bpm:[96,112], swing:0, fill:true,
+   drums:{k:'x.....x...x.....', s:'....x.......x...', h:'x.x.x.x.x.x.x.x.'},
+   bass:[[0,2,0],[2,2,0],[4,2,0],[6,2,0],[8,2,0],[10,2,0],[12,2,7],[14,2,12]],
+   guitar:[[0,'D'],[4,'D'],[6,'U'],[10,'U'],[12,'D'],[14,'U']],
+   keys:{type:'ep', mode:'sustain'}, pad:true,
+   mix:{drums:.75,bass:.7,guitar:.5,keys:.32,pad:.12,melody:.26},
+   mel:[[[0,4],[4,2],[6,2],[8,4],[12,4]],[[2,2],[4,2],[6,4],[10,2],[12,4]],[[0,6],[6,2],[8,8]],[[0,2],[2,2],[4,4],[10,2],[12,2],[14,2]]]},
+ rock:{name:'רוק', bpm:[118,132], swing:0, fill:true, drive:true,
+   drums:{k:'x.......x.x.....', s:'....x.......x...', h:'x.x.x.x.x.x.x.x.'},
+   bass:[[0,2,0],[2,2,0],[4,2,0],[6,2,0],[8,2,0],[10,2,0],[12,2,0],[14,2,0]],
+   guitar:[[0,'D'],[2,'D'],[4,'D'],[6,'D'],[8,'D'],[10,'D'],[12,'D'],[14,'U']],
+   keys:null, pad:true,
+   mix:{drums:.85,bass:.75,guitar:.32,keys:0,pad:.2,melody:.24},
+   mel:[[[0,4],[4,4],[8,4],[12,4]],[[0,2],[2,2],[4,4],[8,8]],[[0,6],[6,2],[8,4],[12,4]]]},
+ ballad:{name:'בלדה', bpm:[64,76], swing:0, soft:true,
+   drums:{k:'x.........x.....', s:'....x.......x...', h:'x...x...x...x...'},
+   bass:[[0,8,0],[8,8,7]],
+   guitar:null, keys:{type:'piano', mode:'arp'}, pad:true,
+   mix:{drums:.45,bass:.65,guitar:0,keys:.55,pad:.16,melody:.24},
+   mel:[[[0,8],[8,4],[12,4]],[[0,4],[4,4],[8,8]],[[0,12],[12,4]],[[2,6],[8,4],[12,4]]]},
+ lofi:{name:'לואו-פיי', bpm:[76,88], swing:.55,
+   drums:{k:'x......x..x.....', s:'....x.......x...', h:'x.x.x.x.x.x.x.x.'},
+   bass:[[0,5,0],[6,2,7],[10,4,0],[14,2,12]],
+   guitar:null, keys:{type:'ep', mode:'stabs', steps:[[0,5],[6,4],[11,5]]}, pad:false,
+   mix:{drums:.6,bass:.7,guitar:0,keys:.42,pad:0,melody:.2},
+   mel:[[[0,3],[3,3],[6,4],[12,4]],[[2,4],[8,2],[10,6]],[[0,8],[10,2],[12,4]]]},
+};
+const INSTR=[['drums','🥁 תופים'],['bass','🎸 בס'],['guitar','🪕 גיטרה'],['keys','🎹 קלידים'],['pad','🌫️ פד'],['melody','🎶 מלודיה']];
+const REV={drums:.08,bass:0,guitar:.25,keys:.35,pad:.5,melody:.4};
+
+/* ===================== State ===================== */
+const store={get(k,d){try{const v=localStorage.getItem('ce_'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem('ce_'+k,JSON.stringify(v))}catch(e){}}};
+let score=store.get('score',0), streak=0;
+let mutes=store.get('mutes',{});
+let loopOn=false, userBpm=store.get('userBpm',null);
+const curBpm=()=>userBpm||Q.bpm;
+let Q=null, answers=[], active=0, checked=false, lastProgKey='';
+const $=s=>document.querySelector(s);
+
+/* ===================== Audio engine ===================== */
+let ctx=null, master, reverb, noiseBuf;
+function initAudio(){
+  if(ctx){ if(ctx.state==='suspended') ctx.resume(); return; }
+  ctx=new (window.AudioContext||window.webkitAudioContext)();
+  const comp=ctx.createDynamicsCompressor();
+  comp.threshold.value=-16; comp.ratio.value=3; comp.attack.value=.005; comp.release.value=.2;
+  master=ctx.createGain(); master.gain.value=.85;
+  master.connect(comp); comp.connect(ctx.destination);
+  reverb=ctx.createConvolver(); reverb.buffer=makeIR(2.4);
+  const rg=ctx.createGain(); rg.gain.value=.55; reverb.connect(rg); rg.connect(master);
+  noiseBuf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate);
+  const d=noiseBuf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+}
+function makeIR(sec){
+  const len=Math.floor(ctx.sampleRate*sec), b=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(let c=0;c<2;c++){const d=b.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2);}
+  return b;
+}
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+function driveCurve(k){const n=1024,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=(1+k)*x/(1+k*Math.abs(x));}return c;}
+
+function newSession(style){
+  const out=ctx.createGain(); out.connect(master);
+  const send=ctx.createGain(); send.connect(reverb);
+  const buses={};
+  for(const [name] of INSTR){
+    const g=ctx.createGain(); g.gain.value=(style.mix[name]||0)*(mutes[name]?0:1);
+    g.connect(out);
+    const s=ctx.createGain(); s.gain.value=REV[name]; g.connect(s); s.connect(send);
+    buses[name]=g;
+  }
+  buses.guitarIn=buses.guitar;
+  if(style.drive){
+    const pre=ctx.createGain(); pre.gain.value=2.2;
+    const sh=ctx.createWaveShaper(); sh.curve=driveCurve(6);
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3200;
+    pre.connect(sh); sh.connect(lp); lp.connect(buses.guitar); buses.guitarIn=pre;
+  }
+  return {out,send,buses,style};
+}
+function endSession(s,fade=.03){
+  if(!s) return; const t=ctx.currentTime;
+  s.out.gain.setTargetAtTime(0,t,fade); s.send.gain.setTargetAtTime(0,t,fade);
+  setTimeout(()=>{try{s.out.disconnect();s.send.disconnect();}catch(e){}},fade*12000+200);
+}
+function applyMutes(){
+  if(P&&P.sess){for(const [n] of INSTR){P.sess.buses[n].gain.setTargetAtTime((P.sess.style.mix[n]||0)*(mutes[n]?0:1),ctx.currentTime,.02);}}
+}
+
+/* --- drums --- */
+function noiseSrc(t,dur){const s=ctx.createBufferSource();s.buffer=noiseBuf;s.start(t,Math.random()*1.5,dur+.05);return s;}
+function kick(b,t,v){
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.004);g.gain.exponentialRampToValueAtTime(.001,t+.42);
+  o.connect(g);g.connect(b);o.start(t);o.stop(t+.45);
+  const n=noiseSrc(t,.02),ng=ctx.createGain(),hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2000;
+  ng.gain.setValueAtTime(v*.25,t);ng.gain.exponentialRampToValueAtTime(.001,t+.02);n.connect(hp);hp.connect(ng);ng.connect(b);
+}
+function snare(b,t,v){
+  const n=noiseSrc(t,.25),f=ctx.createBiquadFilter(),g=ctx.createGain();
+  f.type='highpass';f.frequency.value=1300;
+  g.gain.setValueAtTime(v*.8,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
+  n.connect(f);f.connect(g);g.connect(b);
+  const o=ctx.createOscillator(),og=ctx.createGain();o.type='triangle';
+  o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(160,t+.08);
+  og.gain.setValueAtTime(v*.6,t);og.gain.exponentialRampToValueAtTime(.001,t+.1);
+  o.connect(og);og.connect(b);o.start(t);o.stop(t+.12);
+}
+function hat(b,t,v,open){
+  const d=open?.3:.045,n=noiseSrc(t,d),f=ctx.createBiquadFilter(),g=ctx.createGain();
+  f.type='highpass';f.frequency.value=7500;
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  n.connect(f);f.connect(g);g.connect(b);
+}
+function crash(b,t,v){
+  const n=noiseSrc(t,1.6),f=ctx.createBiquadFilter(),g=ctx.createGain();
+  f.type='highpass';f.frequency.value=5000;
+  g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+1.6);
+  n.connect(f);f.connect(g);g.connect(b);
+}
+
+/* --- plucked string (Karplus-Strong) --- */
+const ksCache={};
+function ksBuffer(midi){
+  if(ksCache[midi]) return ksCache[midi];
+  const sr=ctx.sampleRate,f=mtof(midi),N=Math.floor(sr/f),len=Math.floor(sr*2.4);
+  const buf=ctx.createBuffer(1,len,sr),d=buf.getChannelData(0);
+  let last=0,mean=0;
+  for(let i=0;i<N;i++){const n=Math.random()*2-1;last+=.55*(n-last);d[i]=last;mean+=last;}
+  mean/=N; for(let i=0;i<N;i++) d[i]-=mean;
+  const rho=Math.pow(.001,1/(f*3.2));
+  for(let i=N;i<len;i++){const a=d[i-N],b=i-N-1>=0?d[i-N-1]:0;d[i]=rho*.5*(a+b);}
+  let pk=0;for(let i=0;i<len;i++)pk=Math.max(pk,Math.abs(d[i]));
+  const sc=.6/(pk||1);for(let i=0;i<len;i++)d[i]*=sc;
+  return ksCache[midi]={buf,rate:f/(sr/(N+.5))};
+}
+function pluck(b,t,midi,dur,v){
+  const {buf,rate}=ksBuffer(midi),s=ctx.createBufferSource(),g=ctx.createGain();
+  s.buffer=buf;s.playbackRate.value=rate;
+  g.gain.setValueAtTime(v,t);g.gain.setTargetAtTime(0,t+Math.max(.02,dur),.05);
+  s.connect(g);g.connect(b);s.start(t);s.stop(t+Math.min(dur+.4,2.3/rate));
+}
+function strum(b,t,notes,dir,dur,v){
+  const list=dir==='D'?notes:notes.slice(-4).reverse(),sp=dir==='D'?.012:.009,vv=dir==='D'?v:v*.65;
+  list.forEach((m,i)=>pluck(b,t+i*sp,m,dur-i*sp,vv*(0.85+Math.random()*.3)));
+}
+
+/* --- keys / pad / bass / lead --- */
+function osc(type,f,t,stop){const o=ctx.createOscillator();o.type=type;o.frequency.value=f;o.start(t);o.stop(stop);return o;}
+function epNote(b,t,m,dur,v){
+  const f=mtof(m),end=t+dur+.6,g=ctx.createGain();
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.setTargetAtTime(v*.25,t+.01,.7);g.gain.setTargetAtTime(0,t+dur,.12);
+  osc('sine',f,t,end).connect(g);
+  const g2=ctx.createGain();g2.gain.setValueAtTime(.35,t);g2.gain.setTargetAtTime(.05,t,.25);osc('sine',f*2,t,end).connect(g2);g2.connect(g);
+  const g3=ctx.createGain();g3.gain.setValueAtTime(.12,t);g3.gain.setTargetAtTime(0,t,.04);osc('sine',f*7.02,t,t+.3).connect(g3);g3.connect(g);
+  g.connect(b);
+}
+function pianoNote(b,t,m,dur,v){
+  const f=mtof(m),end=t+dur+.8,g=ctx.createGain(),lp=ctx.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.setValueAtTime(Math.min(6000,f*8),t);lp.frequency.setTargetAtTime(f*3,t,.4);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.004);g.gain.setTargetAtTime(v*.15,t+.01,1.1);g.gain.setTargetAtTime(0,t+dur,.2);
+  osc('triangle',f,t,end).connect(lp);
+  const o2=osc('sawtooth',f*1.002,t,end),g2=ctx.createGain();g2.gain.value=.25;o2.connect(g2);g2.connect(lp);
+  lp.connect(g);g.connect(b);
+}
+function padNote(b,t,m,dur,v){
+  const f=mtof(m),end=t+dur+1.2,g=ctx.createGain(),lp=ctx.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.value=1100;
+  g.gain.setValueAtTime(0,t);g.gain.setTargetAtTime(v,t,.18);g.gain.setTargetAtTime(0,t+dur,.25);
+  [-7,7].forEach(c=>{const o=osc('sawtooth',f,t,end);o.detune.value=c;o.connect(lp);});
+  lp.connect(g);g.connect(b);
+}
+function bassNote(b,t,m,dur,v){
+  const f=mtof(m),end=t+dur+.3,g=ctx.createGain(),lp=ctx.createBiquadFilter();
+  lp.type='lowpass';lp.Q.value=2;lp.frequency.setValueAtTime(1100,t);lp.frequency.setTargetAtTime(320,t,.07);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.setTargetAtTime(v*.6,t+.01,.25);g.gain.setTargetAtTime(0,t+Math.max(.03,dur-.02),.025);
+  osc('sawtooth',f,t,end).connect(lp);
+  const sub=osc('sine',f,t,end),sg=ctx.createGain();sg.gain.value=.8;sub.connect(sg);sg.connect(g);
+  lp.connect(g);g.connect(b);
+}
+function leadNote(b,t,m,dur,v){
+  const f=mtof(m),end=t+dur+.4,g=ctx.createGain(),lp=ctx.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.value=2800;
+  const o=osc('triangle',f,t,end),o2=osc('square',f,t,end),g2=ctx.createGain();g2.gain.value=.12;
+  const lfo=osc('sine',5.2,t,end),lg=ctx.createGain();lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(f*.007,t+Math.min(.35,dur));
+  lfo.connect(lg);lg.connect(o.frequency);lg.connect(o2.frequency);
+  o.connect(lp);o2.connect(g2);g2.connect(lp);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.015);g.gain.setTargetAtTime(v*.7,t+.02,.3);g.gain.setTargetAtTime(0,t+Math.max(.04,dur-.03),.05);
+  lp.connect(g);g.connect(b);
+}
+
+/* ===================== Harmony helpers ===================== */
+function chordOf(label,key){
+  const def=(key.mode==='major'?CH_MAJ:CH_MIN)[label];
+  const rootPc=(key.root+def[0])%12;
+  return {label,rootPc,q:def[1],iv:QUAL[def[1]],name:(key.flat?FLAT:SHARP)[rootPc]+SUF[def[1]]};
+}
+function keysVoicing(ch,center=63){
+  const pcs=ch.iv.map(i=>(ch.rootPc+i)%12);let best=null;
+  for(let inv=0;inv<pcs.length;inv++){
+    const ord=[...pcs.slice(inv),...pcs.slice(0,inv)],notes=[];
+    let n=ord[0];while(n<54)n+=12;notes.push(n);
+    for(let k=1;k<ord.length;k++){let m=ord[k];while(m<=notes[notes.length-1])m+=12;notes.push(m);}
+    const c=notes.reduce((a,b)=>a+b)/notes.length,s=Math.abs(c-center);
+    if(!best||s<best.s)best={notes,s};
+  }
+  return best.notes;
+}
+function gtrVoicing(ch){
+  let r=ch.rootPc;while(r<40)r+=12;
+  const [,th,fi,sev]=ch.iv;
+  const rel=sev!==undefined?[0,fi,sev,12+th,12+fi]:[0,fi,12,12+th,12+fi,24];
+  return rel.map(x=>r+x).filter(n=>n<=77);
+}
+function bassRoot(ch){let r=ch.rootPc;while(r<28)r+=12;return r;}
+function rng32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+function melodyBar(ch,key,rng,style,state){
+  if(rng()<.15) return [];
+  const rh=style.mel[Math.floor(rng()*style.mel.length)];
+  const cp=ch.iv.map(i=>(ch.rootPc+i)%12);
+  const sc=(key.mode==='major'?MAJ_SCALE:MIN_SCALE).map(i=>(key.root+i)%12);
+  const safe=sc.filter(p=>!cp.some(c=>{const d=(p-c+12)%12;return d===1||d===11;}));
+  const weak=[...new Set([...safe,...cp])],out=[];
+  for(const [st,len] of rh){
+    const set=(st%8===0)?cp:weak;
+    let target=state.prev+Math.round((rng()*2-1)*4);
+    if(state.prev>77)target-=3;if(state.prev<68)target+=3;
+    let best=null;
+    for(let m=64;m<=81;m++){if(!set.includes(m%12))continue;const d=Math.abs(m-target)+(m===state.prev?1.5:0);if(!best||d<best.d)best={m,d};}
+    state.prev=best.m;out.push([st,len,best.m]);
+  }
+  return out;
+}
+
+/* ===================== Scheduler ===================== */
+let P=null, rafId=0;
+function scheduleBar(t0,ch,idx,len,absIdx){
+  const sty=P.style,st=P.st,b=P.sess.buses,soft=sty.soft?.55:1;
+  const T=s=>t0+s*st+(sty.swing&&s%4===2?sty.swing*st:0);
+  // drums
+  const D=sty.drums;
+  for(let s=0;s<16;s++){
+    if(D.k[s]==='x')kick(b.drums,T(s),.95*soft*(s%4===0?1:.8));
+    if(D.s[s]==='x')snare(b.drums,T(s),.7*soft);
+    if(D.h[s]==='x')hat(b.drums,T(s),(s%4===0?.32:.2)*soft,false);
+  }
+  if(absIdx===0||(idx===0&&!sty.soft))crash(b.drums,t0,.28*soft);
+  if(sty.fill&&idx===len-1&&len>1){[13,14,15].forEach(s=>snare(b.drums,T(s),.35+.1*(s-13)));}
+  // bass
+  const br=bassRoot(ch);
+  sty.bass.forEach(([s,l,iv])=>bassNote(b.bass,T(s),br+iv,l*st*.92,.8));
+  // guitar
+  if(sty.guitar){
+    const v=gtrVoicing(ch),pat=sty.guitar;
+    pat.forEach(([s,dir],i)=>{const nx=i+1<pat.length?pat[i+1][0]:16;strum(b.guitarIn,T(s),v,dir,(nx-s)*st,.55);});
+  }
+  // keys
+  if(sty.keys){
+    const kv=keysVoicing(ch),fn=sty.keys.type==='piano'?pianoNote:epNote;
+    if(sty.keys.mode==='sustain')kv.forEach(m=>fn(b.keys,t0,m,16*st,.22));
+    else if(sty.keys.mode==='stabs')sty.keys.steps.forEach(([s,l])=>kv.forEach(m=>fn(b.keys,T(s),m,l*st,.22)));
+    else{
+      let lr=ch.rootPc;while(lr<45)lr+=12;
+      const seq=[lr,lr+7,...kv,kv[1]];const order=[0,1,2,3,4,3,2,1];
+      order.forEach((oi,i)=>{const m=seq[Math.min(oi,seq.length-1)];fn(b.keys,T(i*2),m,(16-i*2)*st*.9,i===0?.32:.24);});
+    }
+  }
+  // pad
+  if(sty.pad)keysVoicing(ch,60).forEach(m=>padNote(b.pad,t0,m,16*st,.15));
+  // melody
+  const rng=rng32(P.seed+idx*7919);
+  melodyBar(ch,P.key,rng,sty,P.mel).forEach(([s,l,m])=>leadNote(b.melody,T(s),m,l*st*.9,.5));
+}
+function tick(){
+  if(!P)return;
+  while(P.next<P.total&&P.nextTime<ctx.currentTime+.35){
+    const i=P.next%P.chords.length;
+    scheduleBar(P.nextTime,P.chords[i],i,P.chords.length,P.next);
+    P.bars.push([P.nextTime,i]);if(P.bars.length>16)P.bars.shift();
+    P.nextTime+=P.barDur;P.next++;
+  }
+  if(P.next>=P.total&&ctx.currentTime>P.nextTime){stopPlay(true);}
+}
+function setTempo(bpm){
+  if(!P)return;
+  P.st=60/bpm/4;P.barDur=16*P.st;
+}
+function play(labels,opts={}){
+  initAudio();stopPlay();
+  const style=STYLES[Q.style],st=60/curBpm()/4;
+  P={sess:newSession(style),style,st,barDur:16*st,key:Q.key,seed:Q.seed,bars:[],
+     chords:labels.map(l=>chordOf(l,Q.key)),start:ctx.currentTime+.12,next:0,mel:{prev:72},
+     total:loopOn&&!opts.once?Infinity:labels.length*(opts.repeats||2),hl:opts.hl||null};
+  P.nextTime=P.start;
+  P.timer=setInterval(tick,40);tick();
+  setPlayBtn(true);highlight();
+}
+function stopPlay(natural){
+  if(!P)return;
+  clearInterval(P.timer);endSession(P.sess,natural?.5:.03);P=null;
+  cancelAnimationFrame(rafId);setPlayBtn(false);
+  document.querySelectorAll('.slot').forEach(s=>s.classList.remove('playing'));
+}
+function highlight(){
+  if(!P)return;
+  const el=[...document.querySelectorAll('.slot')];
+  const now=ctx.currentTime;let cur=-1;
+  for(const [t,i] of P.bars){if(t<=now)cur=P.hl?P.hl[0]:i;}
+  el.forEach((s,i)=>s.classList.toggle('playing',i===cur));
+  rafId=requestAnimationFrame(highlight);
+}
+function playTonic(){
+  initAudio();stopPlay();
+  const sty=STYLES[Q.style],sess=newSession({...sty,mix:{...sty.mix,keys:.45,bass:.6}});
+  const tonic=chordOf(Q.key.mode==='major'?'I':'i',Q.key),t=ctx.currentTime+.05;
+  keysVoicing(tonic).forEach(m=>epNote(sess.buses.keys,t,m,1.6,.3));
+  bassNote(sess.buses.bass,t,bassRoot(tonic),1.6,.8);
+  setTimeout(()=>endSession(sess,.4),2600);
+}
+
+/* ===================== Questions ===================== */
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function genProg(L){
+  const T=L.set[0];
+  const cur=CURATED.filter(p=>p.every(c=>L.set.includes(c))&&(!L.startTonic||p[0]===T));
+  for(let tries=0;tries<30;tries++){
+    let p;
+    if(cur.length&&Math.random()<.6)p=pick(cur).slice();
+    else{
+      p=[];for(let i=0;i<4;i++){
+        if(i===0&&(L.startTonic||Math.random()<.4)){p.push(T);continue;}
+        let c;do{c=pick(L.set);}while(c===p[i-1]);p.push(c);
+      }
+      if(!p.includes(T))continue;
+    }
+    if(p.join()!==lastProgKey){lastProgKey=p.join();return p;}
+  }
+  return [T,L.set[1],L.set[2],T];
+}
+function pickTargets(mode){
+  const all=[0,1,2,3];
+  if(mode==='full')return all;
+  const n=mode==='two'?2:1;
+  for(let i=3;i>0;i--){const j=Math.floor(Math.random()*(i+1));[all[i],all[j]]=[all[j],all[i]];}
+  return all.slice(0,n).sort((a,b)=>a-b);
+}
+function newQuestion(){
+  const lv=+$('#level').value,L=LEVELS[lv];
+  let kd;
+  if($('#keysel').value==='fixed')kd=L.mode==='major'?[0,0]:[9,0];
+  else kd=pick(L.mode==='major'?KEYS_MAJ:KEYS_MIN);
+  const key={root:kd[0],flat:!!kd[1],mode:L.mode};
+  key.name=(key.flat?FLAT:SHARP)[key.root]+(L.mode==='major'?' מז׳ור':' מינור');
+  const sv=$('#style').value,style=sv==='random'?pick(Object.keys(STYLES)):sv;
+  const [a,b]=STYLES[style].bpm;
+  const prog=genProg(L);
+  Q={level:lv,key,style,bpm:Math.round(a+Math.random()*(b-a)),prog,
+     targets:pickTargets($('#mode').value),seed:Math.floor(Math.random()*1e9)};
+  answers=Q.prog.map((c,i)=>Q.targets.includes(i)?null:c);
+  active=Q.targets[0];checked=false;
+  $('#fb').textContent='';$('#fb').className='fb';
+  render();
+}
+
+/* ===================== UI ===================== */
+function render(){
+  $('#keyname').textContent=Q.key.name;
+  $('#stylename').textContent=STYLES[Q.style].name;
+  updateTempoUI();
+  $('#lvdesc').textContent=LEVELS[Q.level].desc;
+  const sl=$('#slots');sl.innerHTML='';
+  Q.prog.forEach((c,i)=>{
+    const given=!Q.targets.includes(i);
+    const d=document.createElement('div');
+    d.className='slot'+(i===active&&!checked&&!given?' active':'')+(given?' given':'');
+    let cls='';
+    if(checked&&!given)cls=answers[i]===c?' ok':' bad';
+    d.className+=cls;
+    const ans=answers[i];
+    const showName=checked||given;
+    d.innerHTML=`<button class="pb" aria-label="נגן תיבה">▶</button><div class="n">${i+1}</div>
+      <div class="ans">${ans??'?'}</div>
+      ${checked&&!given&&ans!==c?`<div class="fix">${c}</div>`:''}
+      <div class="sub">${showName?chordOf(c,Q.key).name:''}</div>`;
+    d.addEventListener('click',e=>{
+      if(e.target.classList.contains('pb')){e.stopPropagation();play([c],{repeats:2,once:true,hl:[i]});return;}
+      if(given||checked)return;active=i;render();
+    });
+    sl.appendChild(d);
+  });
+  const ch=$('#chords');ch.innerHTML='';
+  LEVELS[Q.level].set.forEach(l=>{
+    const bt=document.createElement('button');
+    bt.innerHTML=`${l}${$('#keysel').value==='fixed'||checked?`<small>${chordOf(l,Q.key).name}</small>`:''}`;
+    bt.disabled=checked;
+    bt.onclick=()=>{
+      if(checked)return;answers[active]=l;
+      const nx=answers.findIndex(a=>a===null);if(nx>=0)active=nx;
+      render();
+    };
+    ch.appendChild(bt);
+  });
+  const ac=$('#actions');ac.innerHTML='';
+  if(!checked){
+    const ready=answers.every(a=>a!==null);
+    const cb=btn('בדוק',()=>check(),'primary');cb.disabled=!ready;cb.style.opacity=ready?1:.45;ac.appendChild(cb);
+    ac.appendChild(btn('דלג',()=>{stopPlay();newQuestion();}));
+  }else{
+    ac.appendChild(btn('▶ המקור',()=>play(Q.prog)));
+    if(answers.some((a,i)=>a!==Q.prog[i]))ac.appendChild(btn('▶ מה שעניתי',()=>play(answers)));
+    ac.appendChild(btn('שאלה הבאה ←',()=>{newQuestion();play(Q.prog);},'primary'));
+  }
+  $('#score').textContent=score;$('#streak').textContent=streak;
+}
+function btn(t,f,c){const b=document.createElement('button');b.textContent=t;b.onclick=f;if(c)b.className=c;return b;}
+function check(){
+  checked=true;
+  const idx=Q.targets;
+  const ok=idx.filter(i=>answers[i]===Q.prog[i]).length;
+  score+=ok;store.set('score',score);
+  const fb=$('#fb');
+  if(ok===idx.length){streak++;fb.textContent=idx.length>1?'מעולה! כל האקורדים נכונים 🎉':'נכון! 🎉';fb.className='fb ok';}
+  else{streak=0;fb.textContent=idx.length>1?`${ok} מתוך ${idx.length} נכונים. השווה בין המקור למה שענית`:'לא הפעם. נסה להשוות בין המקור למה שענית';fb.className='fb bad';}
+  render();
+}
+function setPlayBtn(on){const b=$('#playBtn');b.textContent=on?'■ עצור':'▶ נגן';b.classList.toggle('stop',on);}
+
+/* ===================== Init ===================== */
+LEVELS.forEach((L,i)=>{const o=document.createElement('option');o.value=i;o.textContent=L.name;$('#level').appendChild(o);});
+$('#level').value=store.get('level',0);
+$('#mode').value=store.get('mode','full');
+$('#style').value=store.get('style','random');
+$('#keysel').value=store.get('keysel','random');
+['level','mode','style','keysel'].forEach(id=>$('#'+id).addEventListener('change',()=>{store.set(id,$('#'+id).value);stopPlay();newQuestion();}));
+$('#playBtn').onclick=()=>{if(P)stopPlay();else play(Q.prog);};
+$('#tonicBtn').onclick=playTonic;
+$('#loopBtn').onclick=()=>{loopOn=!loopOn;$('#loopBtn').classList.toggle('on',loopOn);};
+function updateTempoUI(){
+  const v=curBpm();$('#tempo').value=v;
+  $('#bpm').textContent=v+' BPM';
+  const tv=$('#tempoVal');tv.textContent=v+' BPM';tv.classList.toggle('mine',!!userBpm);
+}
+$('#tempo').addEventListener('input',e=>{
+  userBpm=+e.target.value;store.set('userBpm',userBpm);setTempo(userBpm);updateTempoUI();
+});
+$('#tempoReset').onclick=()=>{userBpm=null;store.set('userBpm',null);setTempo(Q.bpm);updateTempoUI();};
+const mix=$('#mix');
+INSTR.forEach(([n,label])=>{
+  const b=document.createElement('button');b.className='tog'+(mutes[n]?'':' on');b.textContent=label;
+  b.onclick=()=>{mutes[n]=!mutes[n];b.classList.toggle('on',!mutes[n]);store.set('mutes',mutes);applyMutes();};
+  mix.appendChild(b);
+});
+newQuestion();
+
+/* ===================== Intervals ===================== */
+const DEG=[{s:2,n:'רה',i:'סקונדה גדולה'},{s:4,n:'מי',i:'טרצה גדולה'},{s:5,n:'פה',i:'קוורטה זכה'},
+  {s:7,n:'סול',i:'קווינטה זכה'},{s:9,n:'לה',i:'סקסטה גדולה'},{s:11,n:'סי',i:'ספטימה גדולה'},{s:12,n:'דו׳',i:'אוקטבה'}];
+const SOLF12=['דו','דו♯','רה','מי♭','מי','פה','פה♯','סול','סול♯','לה','סי♭','סי'];
+const PREF=['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+let iPool=store.get('iPool',[0,1,2,3,4,5,6]);
+let IQ=null, iOut=null;
+
+function iNoteOut(){
+  initAudio();
+  if(iOut){const o=iOut;o.gain.setTargetAtTime(0,ctx.currentTime,.03);setTimeout(()=>{try{o.disconnect()}catch(e){}},400);}
+  const g=ctx.createGain();g.gain.value=.75;g.connect(master);
+  const s=ctx.createGain();s.gain.value=.3;g.connect(s);s.connect(reverb);
+  iOut=g;return g;
+}
+function iPlay(notes){ // notes: [[midi, startOffset, dur]]
+  stopPlay();const b=iNoteOut(),t=ctx.currentTime+.05;
+  notes.forEach(([m,o,d])=>pianoNote(b,t+o,m,d,.45));
+}
+const iTarget=()=>IQ.base+DEG[IQ.d].s;
+function iPlayQuestion(){
+  if(IQ.mode==='listen'&&$('#iHow').value==='harm')iPlay([[IQ.base,0,1.8],[iTarget(),0,1.8]]);
+  else iPlay([[IQ.base,0,.9],[iTarget(),1.0,1.2]]);
+}
+
+function newIQ(){
+  stopMic(true);
+  const pool=iPool.length?iPool:[0,1,2,3,4,5,6];
+  let d;do{d=pick(pool);}while(pool.length>1&&IQ&&d===IQ.d);
+  const high=$('#iRange').value==='high';
+  // high: do between G3..D4 / low: do between G2..D3 (so even סי/דו׳ stay singable)
+  const base=$('#iKey').value==='fixed'?(high?60:48):(high?55:43)+Math.floor(Math.random()*8);
+  IQ={d,base,mode:$('#iMode').value,done:false,chosen:null};
+  renderI();
+}
+function renderI(){
+  const listen=IQ.mode==='listen',D=DEG[IQ.d];
+  $('#iHowWrap').style.visibility=listen?'visible':'hidden';
+  $('#iBase').textContent=PREF[IQ.base%12];
+  $('#iInfo2').textContent=listen?'':'השר באוקטבה שנוחה לך';
+  $('#iPrompt').innerHTML=listen?'איזה תו שמעת אחרי הדו?'
+    :`שיר: ${D.n}<small>${D.i} מעל דו</small>`;
+  const c=$('#iCtrls');c.innerHTML='';
+  if(listen){
+    c.appendChild(mk('button','big','▶ השמע',iPlayQuestion));
+    c.appendChild(mk('button','tog','🎯 רק דו',()=>iPlay([[IQ.base,0,1.4]])));
+  }else{
+    c.appendChild(mk('button','big','🎙️ תן דו ואתחיל לשיר',singStart));
+    c.appendChild(mk('button','tog','🎯 דו',()=>iPlay([[IQ.base,0,1.4]])));
+  }
+  $('#iTuner').hidden=true;$('#iFallback').hidden=true;
+  const a=$('#iAns');a.innerHTML='';
+  if(listen){
+    DEG.forEach((g,k)=>{
+      const b=mk('button','',`${g.n}<small>${g.i}</small>`,()=>iAnswer(k));
+      if(IQ.done){b.disabled=k!==IQ.d&&k!==IQ.chosen;if(k===IQ.d)b.classList.add('ok');else if(k===IQ.chosen)b.classList.add('bad');b.style.opacity=1;}
+      if(!iPool.includes(k)&&!IQ.done)b.style.opacity=.35;
+      a.appendChild(b);
+    });
+  }
+  const acts=$('#iActs');acts.innerHTML='';
+  if(IQ.done){
+    acts.appendChild(mk('button','','▶ שוב',iPlayQuestion));
+    if(listen&&IQ.chosen!==IQ.d)acts.appendChild(mk('button','','▶ מה שבחרתי',()=>iPlay([[IQ.base,0,.9],[IQ.base+DEG[IQ.chosen].s,1.0,1.2]])));
+    acts.appendChild(mk('button','primary','הבא ←',()=>{newIQ();$('#iFb').textContent='';if(IQ.mode==='listen')iPlayQuestion();}));
+  }else if(!listen){
+    acts.appendChild(mk('button','','דלג',()=>{newIQ();$('#iFb').textContent='';}));
+  }
+  $('#score').textContent=score;$('#streak').textContent=streak;
+}
+function mk(tag,cls,html,fn){const e=document.createElement(tag);if(cls)e.className=cls;e.innerHTML=html;if(fn)e.onclick=fn;return e;}
+function iResult(ok,msg){
+  IQ.done=true;
+  if(ok){score++;streak++;}else streak=0;
+  store.set('score',score);
+  const fb=$('#iFb');fb.textContent=msg;fb.className='fb '+(ok?'ok':'bad');
+  renderI();
+}
+function iAnswer(k){
+  if(IQ.done)return;IQ.chosen=k;
+  const D=DEG[IQ.d];
+  iResult(k===IQ.d,k===IQ.d?`נכון! ${D.n}, ${D.i} 🎉`:`זה היה ${D.n} (${D.i})`);
+}
+
+/* --- pitch detection (YIN) --- */
+function detectPitch(buf,sr){
+  const n=buf.length;let rms=0;for(let i=0;i<n;i++)rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/n);if(rms<.012)return null;
+  const W=Math.floor(n/2),minLag=Math.floor(sr/1000),maxLag=Math.min(W-2,Math.floor(sr/65));
+  const c=new Float32Array(maxLag+2);let run=0;c[0]=1;
+  for(let tau=1;tau<=maxLag+1;tau++){
+    let s=0;for(let i=0;i<W;i++){const df=buf[i]-buf[i+tau];s+=df*df;}
+    run+=s;c[tau]=run?s*tau/run:1;
+  }
+  let tau=-1;
+  for(let t=minLag;t<=maxLag;t++){if(c[t]<.15){while(t+1<=maxLag&&c[t+1]<c[t])t++;tau=t;break;}}
+  if(tau<1)return null;
+  const x0=c[tau-1],x1=c[tau],x2=c[tau+1],den=x0+x2-2*x1;
+  return sr/(tau+(den?(x0-x2)/(2*den):0));
+}
+function relInfo(f){ // position of sung pitch relative to do, folded to one octave
+  const relC=((1200*Math.log2(f/mtof(IQ.base)))%1200+1200)%1200;
+  const k=Math.round(relC/100)%12;
+  let dev=relC-k*100;if(dev>600)dev-=1200;
+  let tdev=relC-(DEG[IQ.d].s%12)*100;if(tdev>600)tdev-=1200;if(tdev<-600)tdev+=1200;
+  return {k,dev,tdev};
+}
+
+/* --- live microphone --- */
+let mic=null;
+async function singStart(){
+  if(IQ.done)return;
+  iPlay([[IQ.base,0,1.1]]);
+  let okMic=!!mic;
+  if(!mic){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      const src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();an.fftSize=2048;src.connect(an);
+      mic={stream,src,an,buf:new Float32Array(2048),raf:0,hit:0,last:0,listenAt:0};okMic=true;
+    }catch(e){okMic=false;}
+  }
+  if(!okMic){showFallback();return;}
+  mic.listenAt=performance.now()+1300;mic.hit=0;
+  $('#iTuner').hidden=false;$('#tNote').textContent='מקשיב אחרי הדו…';$('#tNote').className='tnote';
+  cancelAnimationFrame(mic.raf);mic.raf=requestAnimationFrame(micLoop);
+}
+function micLoop(ts){
+  if(!mic||!IQ||IQ.done)return;
+  mic.raf=requestAnimationFrame(micLoop);
+  if(ts<mic.listenAt||ts-mic.last<55)return;
+  const dt=mic.last?Math.min(120,ts-mic.last):55;mic.last=ts;
+  mic.an.getFloatTimeDomainData(mic.buf);
+  const f=detectPitch(mic.buf,ctx.sampleRate),tn=$('#tNote');
+  if(!f){tn.textContent='…';tn.className='tnote';mic.hit=Math.max(0,mic.hit-dt);return;}
+  const r=relInfo(f);
+  const cents=Math.round(r.dev);
+  tn.textContent=`אתה שר: ${SOLF12[r.k]} ${cents>0?'+':''}${cents}¢`;
+  const pos=50+Math.max(-50,Math.min(50,r.tdev/4));
+  $('#tNeedle').style.left=pos+'%';
+  if(Math.abs(r.tdev)<35){mic.hit+=dt;tn.className='tnote hit';}else{mic.hit=Math.max(0,mic.hit-dt*2);tn.className='tnote';}
+  if(mic.hit>=700){const D=DEG[IQ.d];stopMic(true);iResult(true,`בול! שרת ${D.n} 🎉`);iPlay([[IQ.base,0,.8],[iTarget(),.85,1.2]]);}
+}
+function stopMic(keepTuner){
+  if(mic){cancelAnimationFrame(mic.raf);}
+  if(!keepTuner&&mic){mic.stream.getTracks().forEach(t=>t.stop());try{mic.src.disconnect()}catch(e){}mic=null;}
+}
+
+/* --- fallback: upload a recording, or self-check --- */
+function showFallback(){
+  const fb=$('#iFallback');fb.hidden=false;
+  fb.innerHTML=`המיקרופון חסום בחלון הזה, ולכן אי אפשר לשמוע אותך בזמן אמת. יש שתי דרכים לבדוק בכל זאת:
+   <div class="row"><label class="filebtn">🎤 הקלט / העלה הקלטה<input type="file" accept="audio/*" capture id="iFile"></label></div>
+   <div style="margin-top:8px">או בדוק את עצמך: שיר, ואז השמע את התו הנכון והשווה.</div>
+   <div class="row"><button class="tog" id="iRevealBtn">▶ השמע את התו הנכון</button></div>
+   <div class="row"><button class="tog" id="iSelfOk">✓ צדקתי</button><button class="tog" id="iSelfBad">✗ פספסתי</button></div>
+   <div id="iFileRes" style="margin-top:8px"></div>`;
+  $('#iFile').onchange=e=>{const f=e.target.files[0];if(f)analyzeFile(f);};
+  $('#iRevealBtn').onclick=()=>iPlay([[IQ.base,0,.8],[iTarget(),.85,1.4]]);
+  $('#iSelfOk').onclick=()=>iResult(true,`יפה! ${DEG[IQ.d].n} 🎉`);
+  $('#iSelfBad').onclick=()=>iResult(false,`נסה שוב בשאלה הבאה. התו היה ${DEG[IQ.d].n}`);
+}
+async function analyzeFile(file){
+  const out=$('#iFileRes');out.textContent='מנתח…';
+  try{
+    initAudio();
+    const audio=await ctx.decodeAudioData(await file.arrayBuffer());
+    const ch=audio.getChannelData(0),sr=audio.sampleRate,N=2048,hop=Math.max(1024,Math.floor(ch.length/300));
+    const bins=Array.from({length:12},()=>[]);
+    for(let i=0;i+N<ch.length;i+=hop){
+      const f=detectPitch(ch.subarray(i,i+N),sr);if(!f)continue;
+      const r=relInfo(f);bins[r.k].push(r.dev);
+    }
+    let best=0;bins.forEach((b,k)=>{if(b.length>bins[best].length)best=k;});
+    const total=bins.reduce((a,b)=>a+b.length,0);
+    if(total<6){out.textContent='לא הצלחתי לזהות שירה בהקלטה. נסה להקליט שוב קרוב יותר לטלפון, ולהחזיק את התו לפחות שנייה.';return;}
+    const dev=Math.round(bins[best].reduce((a,b)=>a+b,0)/bins[best].length);
+    const want=DEG[IQ.d].s%12,ok=best===want&&Math.abs(dev)<40;
+    iResult(ok,ok?`בול! שרת ${DEG[IQ.d].n} (${dev>0?'+':''}${dev}¢) 🎉`
+      :`שרת ${SOLF12[best]} ${dev>0?'+':''}${dev}¢. היה צריך ${DEG[IQ.d].n}`);
+  }catch(e){out.textContent='לא הצלחתי לקרוא את הקובץ. נסה הקלטה בפורמט אחר.';}
+}
+
+/* --- interval UI init --- */
+const poolEl=$('#iPool');
+DEG.forEach((g,k)=>{
+  const b=mk('button','tog'+(iPool.includes(k)?' on':''),g.n,()=>{
+    iPool=iPool.includes(k)?iPool.filter(x=>x!==k):[...iPool,k].sort();
+    b.classList.toggle('on',iPool.includes(k));store.set('iPool',iPool);
+  });
+  poolEl.appendChild(b);
+});
+['iMode','iHow','iRange','iKey'].forEach(id=>{
+  $('#'+id).value=store.get(id,$('#'+id).value);
+  $('#'+id).addEventListener('change',()=>{store.set(id,$('#'+id).value);$('#iFb').textContent='';newIQ();});
+});
+document.querySelectorAll('.tabs button').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===t));
+  ['vChords','vInt'].forEach(v=>$('#'+v).hidden=v!==t.dataset.v);
+  stopPlay();stopMic();
+  if(t.dataset.v==='vInt'&&!IQ)newIQ();
+});
+</script>
+</body>
+</html>
